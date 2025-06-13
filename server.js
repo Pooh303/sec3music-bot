@@ -143,7 +143,7 @@ client.on('messageCreate', async message => {
                 }
             }, SESSION_TOKEN_EXPIRY_MS);
 
-            const sessionLink = `${WEB_UI_BASE_URL}/index.html?session_token=${token}`;
+            const sessionLink = `${WEB_UI_BASE_URL}?session_token=${token}`;
             
             const dmMessageContent = `*จัดไปวัยรุ่น ! ลิงก์ลับสำหรับเปิดเพลงของนายมาแล้ว : *\n||${sessionLink}||\n\n` +
                                    `👉  ลิงก์มีอายุ ${SESSION_TOKEN_EXPIRY_MS / (60 * 60 * 1000)} ชั่วโมง ถ้าใช้ไม่ได้แล้วก็พิมพ์คำสั่งใหม่ได้เลยน้ะ  😗`; 
@@ -225,7 +225,7 @@ app.get('/api/queue', async (req, res) => {
             paused: queue.paused, 
             currentTime: queue.currentTime, 
             metadata: queue.songs[0].metadata,
-            isLive: typeof queue.songs[0].isLive === 'boolean' ? queue.songs[0].isLive : false // ส่ง isLive ไปให้ client
+            isLive: typeof queue.songs[0].isLive === 'boolean' ? queue.songs[0].isLive : false
         } : null;
         
         const upcomingSongs = queue.songs.slice(1).map(song => ({ 
@@ -236,7 +236,7 @@ app.get('/api/queue', async (req, res) => {
             url: song.url, 
             thumbnail: song.thumbnail, 
             metadata: song.metadata,
-            isLive: typeof song.isLive === 'boolean' ? song.isLive : false // ส่ง isLive ไปให้ client
+            isLive: typeof song.isLive === 'boolean' ? song.isLive : false
         }));
         res.json({ current: currentSong, queue: upcomingSongs });
     } catch (error) { console.error('Queue API error:', error); res.status(500).json({ error: error.message }); }
