@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime files
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor folders
+.vscode/
+.idea/
+
+# Optional: ignore build artifacts if any
+dist/
+build/
+
+# Optional: ignore uploads or temp files
+tmp/
+temp/
+uploads/
