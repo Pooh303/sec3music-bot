@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sec 3 Music Player</title>
+    <link rel="icon" type="image/png" href="images/music.png">
+
+    <!-- Google Fonts - Noto Sans Thai and Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&family=Sarabun:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet"> 
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        :root {
+            --discord-dark: #36393f;
+            --discord-darker: #2f3136;
+            --discord-darkest: #202225;
+            --discord-accent: #7289da;
+            --discord-text: #ffffff;
+            --discord-text-muted: #b9bbbe;
+            --font-main: "Sarabun", "Noto Sans Thai", sans-serif; 
+        }
+        body { 
+            padding: 20px; 
+            background-color: var(--discord-dark); 
+            color: var(--discord-text); 
+            min-height: 100vh; 
+            font-family: var(--font-main); 
+            font-weight: 400; 
+        }
+        h1, h5, .btn, .form-control, 
+        .song-info strong, .song-info span, 
+        .added-by span, 
+        #userInfoDisplay span strong, #userInfoDisplay span, 
+        .queue-header strong, 
+        .search-result-item .title, .search-result-item .channel, 
+        .no-songs, .loading-spinner,
+        .queue-item .song-info
+         {
+            font-family: var(--font-main);
+        }
+        .container { max-width: 800px; }
+        .card { background-color: var(--discord-darker); border: none; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 8px; }
+        .card-body { padding: 1.5rem; }
+        .form-control { background-color: var(--discord-darkest); border: 1px solid transparent; color: var(--discord-text); padding: 0.75rem 1rem; border-radius: 4px; }
+        .form-control::placeholder { color: var(--discord-text-muted); opacity: 1; font-weight: 300; }
+        .form-control:focus { background-color: var(--discord-darkest); color: var(--discord-text); box-shadow: none; border-color: var(--discord-accent); }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 4px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary { background-color: var(--discord-accent); border: none; }
+        .btn-primary:hover { background-color: #677bc4; } 
+        .btn i { margin-right: 8px; }
+        .seek-controls { display: flex; justify-content: center; align-items: center; margin-top: 0.75rem; gap: 1rem; }
+        .seek-btn { background-color: transparent; border: 1px solid var(--discord-text-muted); color: var(--discord-text-muted); padding: 0.3rem 0.6rem; font-size: 0.9em; border-radius: 20px; }
+        .seek-btn:hover { background-color: var(--discord-darkest); color: var(--discord-text); }
+        .seek-btn i { margin-right: 5px; }
+        .queue-item { padding: 1rem; border-bottom: 1px solid var(--discord-darkest); transition: background-color 0.2s ease; color: var(--discord-text); display: flex; justify-content: space-between; align-items: center; position: relative; border-radius: 12px; }
+        .queue-item:hover { background-color: var(--discord-darkest); }
+        .queue-item-list {border-radius: 12px; margin-top: 4px;} 
+        .queue-header { padding: 1.2rem; color: var(--discord-text); display: flex; justify-content: space-between; align-items: center; font-weight: 600; margin-bottom: -12px;} 
+        .queue-item:last-child { border-bottom: none; }
+        .queue-item .delete-btn { color: var(--discord-text-muted); background: none; border: none; padding: 5px; cursor: pointer; transition: all 0.2s ease; opacity: 0.5; }
+        .queue-item:hover .delete-btn { opacity: 1; }
+        .queue-item .delete-btn:hover { color: #ff4444; transform: scale(1.1); }
+        .queue-item .song-info { flex: 1; margin-right: 10px; font-weight: 500; } 
+        .current-song .song-info strong { font-weight: 700; color: #ffc107;} 
+        .current-song .song-info > span[style*="font-weight: 500"] { font-weight: 500 !important; } 
+        .current-song { background-color: var(--discord-darkest); border-left: 20px solid var(--discord-accent); } 
+        .volume-control { display: flex; align-items: center; gap: 1rem; }
+        .volume-control i { color: var(--discord-text-muted); cursor: pointer; }
+        .form-range::-webkit-slider-thumb { background: var(--discord-accent); }
+        .form-range::-moz-range-thumb { background: var(--discord-accent); }
+        .form-range::-ms-thumb { background: var(--discord-accent); }
+        .queue-item .song-duration { color: var(--discord-text-muted); font-size: 0.875rem; font-weight: 300; }
+        .current-song .song-duration { display: inline-block; margin-right: 10px; }
+        .queue-item .countdown { color: var(--discord-accent); font-weight: 700; } 
+        .controls { display: flex; gap: 1rem; justify-content: center; margin: 1.5rem 0; }
+        .queue-title { color: var(--discord-text); font-size: 1.1rem; margin-bottom: 1rem; padding: 0 1rem; font-weight: 600; }
+        .no-songs { text-align: center; color: var(--discord-text-muted); padding: 2rem; font-weight: 300; }
+        .search-results { background-color: var(--discord-darkest); border-radius: 4px; margin-top: 10px; max-height: 400px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--discord-accent) var(--discord-darkest); }
+        .search-results::-webkit-scrollbar { width: 8px; }
+        .search-results::-webkit-scrollbar-track { background: var(--discord-darkest); border-radius: 4px; }
+        .search-results::-webkit-scrollbar-thumb { background: var(--discord-accent); border-radius: 4px; }
+        .search-results::-webkit-scrollbar-thumb:hover { background: #677bc4; }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--discord-dark); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--discord-darker); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--discord-accent); }
+        .search-result-item { padding: 10px; border-bottom: 1px solid var(--discord-darker); cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .search-result-item:hover { background-color: var(--discord-dark); } 
+        .search-result-item img { width: 120px; height: 68px; object-fit: cover; border-radius: 4px; }
+        .search-result-item .info { flex: 1; }
+        .search-result-item .title { color: var(--discord-text); margin-bottom: 4px; font-weight: 500; }
+        .search-result-item .channel { color: var(--discord-text-muted); font-size: 0.9em; font-weight: 300; }
+        .loading-spinner { text-align: center; padding: 20px; color: var(--discord-text-muted); font-weight: 300; }
+        .search-result-item.selected { background-color: var(--discord-accent); }
+        .search-result-item.selected .title, .search-result-item.selected .channel { color: white; }
+        .disk-container { width: 250px; height: 250px; margin: 20px auto; display: flex; justify-content: center; align-items: center; }
+        .vinyl-disk { width: 100%; height: 100%; background-color: #222; border-radius: 50%; position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(0,0,0,0.7), inset 0 0 50px rgba(50,50,50,0.3); display: flex; justify-content: center; align-items: center; overflow: hidden; animation: rotateDisk 10s linear infinite; animation-play-state: paused; }
+        .vinyl-disk.playing { animation-play-state: running; }
+        .disk-label { width: 65%; height: 65%; border-radius: 50%; object-fit: cover; border: 3px solid #111; box-shadow: 0 0 5px rgba(255,255,255,0.1); pointer-events: none; }
+        @keyframes rotateDisk { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .video-player-card-title { color: var(--discord-text); font-size: 1.1rem; margin-bottom: 1rem; text-align: center; font-weight: 600; }
+        .added-by { display: block; font-size: 0.8em; color: var(--discord-text-muted); margin-top: 5px; line-height: 16px; font-weight: 300; }
+        .added-by-avatar { width: 20px; height: 20px; border-radius: 50%; margin-right: 5px; vertical-align: middle;} 
+        
+        #userInfoDisplay { 
+            text-align: center; 
+            margin-bottom: 15px; 
+            padding: 10px 15px; 
+            background-color: var(--discord-darkest); 
+            border-radius: 8px; 
+            transition: background-image 0.5s ease-in-out, box-shadow 0.3s ease; 
+        }
+        #userInfoDisplay.session-active {
+            background-size: 200% 200%; 
+            background-image: linear-gradient( 45deg, #2c3e50, #3498db, #8e44ad, #e74c3c );
+            animation: gradientAnimation 10s ease infinite;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        #userInfoDisplay img { 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            vertical-align: middle; 
+            margin-right: 8px; 
+        } 
+        #userInfoDisplay small {
+            color: #ffc107;
+            font-weight: 300;
+        }
+        #userInfoDisplay.session-active span{
+            color: var(--discord-text);
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);;
+        }
+        #userInfoDisplay.session-active span strong { 
+            color: lightgreen; 
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);;
+        }
+        #userInfoDisplay span { 
+            vertical-align: middle; 
+            font-weight: 500; 
+        }
+        #userInfoDisplay span strong { 
+            font-weight: 700; 
+        }        
+        #userInfoDisplay .close-session-message-btn { 
+            margin-left: 15px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            padding: 0 5px; 
+            text-decoration: none; 
+            font-size: 1.2em; 
+            line-height: 1; 
+            vertical-align: baseline; 
+        }
+        #userInfoDisplay .close-session-message-btn { 
+            color: var(--discord-text-muted); 
+        }
+        #userInfoDisplay .close-session-message-btn:hover {
+            color: var(--discord-text); 
+        }
+        #userInfoDisplay.session-active .close-session-message-btn { 
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        #userInfoDisplay.session-active .close-session-message-btn:hover {
+            color: #ffffff;
+        }
+        @keyframes gradientAnimation { 
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .hidden-for-unsessioned { display: none !important; }
+
+        .swal2-popup { background: var(--discord-darker) !important; color: var(--discord-text) !important; border-radius: 8px !important; font-family: var(--font-main) !important; }
+        .swal2-title { color: var(--discord-text) !important; font-family: var(--font-main) !important; font-weight: 600 !important; }
+        .swal2-html-container, .swal2-html-container p, .swal2-html-container div { color: var(--discord-text-muted) !important; font-family: var(--font-main) !important; font-weight: 400 !important; }
+        .swal2-confirm { background-color: var(--discord-accent) !important; border-radius: 4px !important; font-family: var(--font-main) !important; font-weight: 500 !important; border: none !important; box-shadow: none !important; }
+        .swal2-confirm:hover { background-color: #677bc4 !important; }
+        .swal2-icon.swal2-error { border-color: #dc3545 !important; color: #dc3545 !important; }
+        .swal2-icon.swal2-success .swal2-success-ring { border-color: #28a745 !important; }
+        .swal2-icon.swal2-success .swal2-success-line-tip, .swal2-icon.swal2-success .swal2-success-line-long { background-color: #28a745 !important; }
+        .swal2-icon.swal2-warning { border-color: #ffc107 !important; color: #ffc107 !important; }
+        .swal2-icon.swal2-info { border-color: var(--discord-accent) !important; color: var(--discord-accent) !important; }
+        .swal2-timer-progress-bar { background: var(--discord-accent) !important; }
+
+        /* CSS for Drag and Drop (SortableJS will add some of these dynamically) */
+        .queue-item-list.sortable-ghost { 
+            opacity: 0.4;
+            background: var(--discord-darkest);
+        }
+        /* .queue-item-list.sortable-chosen { } */ 
+        .drag-handle { 
+            cursor: grab;
+            margin-right: 10px; 
+            color: var(--discord-text-muted);
+            padding: 0 5px; 
+        }
+        .drag-handle:hover {
+            color: var(--discord-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center m-2" style="font-weight: 600;"><i class="fas fa-compact-disc"></i> Sec 3 Music ®</h1>
+
+        <div class="container-vid" id="videoPlayerCard" style="display: none;"> 
+            <div class="card-body">
+                <div class="disk-container">
+                    <div class="vinyl-disk" id="vinylDisk">
+                        <img id="youtubeThumbnail" src="" alt="Song cover" class="disk-label">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card hidden-for-unsessioned" id="controlsCard"> 
+            <div class="card-body">
+                <form id="playForm" class="mb-2">
+                    <div class="input-group">
+                        <input type="text" id="urlInput" class="form-control" placeholder="Search YouTube or paste URL" required autocomplete="off">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-play"></i> Play</button>
+                    </div>
+                </form>
+                <div id="searchResults" class="search-results" style="display: none;"></div>
+                <div class="controls">
+                    <button id="skipBtn" class="btn btn-primary"><i class="fas fa-forward"></i> Skip</button>
+                    <button id="pauseBtn" class="btn btn-primary" style="display: none;"><i class="fas fa-pause"></i> Pause</button> 
+                    <button id="resumeBtn" class="btn btn-primary" style="display: none;"><i class="fas fa-play"></i> Resume</button>
+                    <button id="stopBtn" class="btn btn-primary"><i class="fas fa-stop"></i> Stop</button>
+                </div>
+                <div class="volume-control">
+                    <i class="fas fa-volume-up" id="volumeIcon" title="Mute/Unmute"></i> 
+                    <input type="range" class="form-range" id="volumeSlider" min="0" max="200" value="100">
+                </div>
+            </div>
+        </div>
+        
+        <div id="userInfoDisplayContainer"></div>
+
+        <div class="card"> 
+            <div class="card-body">
+                <h5 class="queue-title" style="font-weight: 600;"><i class="fas fa-list"></i> Queue</h5>
+                <div id="nowPlayingContainer"></div>
+                <div id="queueItemsContainer">
+                    <!-- Queue header and items will be rendered here by JS and made sortable -->
+                </div>
+                <div id="emptyQueueMessage" class="no-songs" style="display: none; font-weight: 300;">
+                    <i class="fas fa-info-circle"></i> Queue is empty.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SortableJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        const API_URL = ''; 
+        const SESSION_STORAGE_KEY = 'musicPlayerSessionToken'; 
+
+        let searchTimeout = null;
+        let selectedResultIndex = -1;
+        let searchResultsData = [];
+        let currentUser = null;
+        let isMuted = false;
+        let previousVolumeBeforeMute = 100; 
+        let currentSongDataForSeek = null; 
+        let sortableQueue = null; 
+
+        const urlInput = document.getElementById('urlInput');
+        const searchResultsDiv = document.getElementById('searchResults');
+        const playForm = document.getElementById('playForm');
+        const skipBtn = document.getElementById('skipBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resumeBtn = document.getElementById('resumeBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIcon = document.getElementById('volumeIcon'); 
+        const nowPlayingContainer = document.getElementById('nowPlayingContainer');
+        const queueItemsContainer = document.getElementById('queueItemsContainer'); 
+        const emptyQueueMessage = document.getElementById('emptyQueueMessage');
+        const videoPlayerCard = document.getElementById('videoPlayerCard');
+        const youtubeThumbnail = document.getElementById('youtubeThumbnail');
+        const vinylDisk = document.getElementById('vinylDisk');
+        const userInfoDisplayContainer = document.getElementById('userInfoDisplayContainer'); 
+        const controlsCard = document.getElementById('controlsCard'); 
+
+        let previousCurrentSongId = null; 
+        let previousQueueLength = 0;    
+        
+        function showNotification(type, title, text = '') {
+            Swal.fire({
+                icon: type, 
+                title: title,
+                text: text,
+                toast: true, 
+                position: 'top-end', 
+                showConfirmButton: false, 
+                timer: 3000, 
+                timerProgressBar: true, 
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            const userInfoDisplay = document.createElement('div');
+            userInfoDisplay.id = 'userInfoDisplay'; 
+            userInfoDisplayContainer.appendChild(userInfoDisplay);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            let sessionTokenFromUrl = urlParams.get('session_token');
+            let sessionTokenFromStorage = localStorage.getItem(SESSION_STORAGE_KEY);
+            let activeToken = sessionTokenFromUrl || sessionTokenFromStorage;
+            
+            let initialErrorMessage = null; 
+
+            if (sessionTokenFromUrl) { 
+                localStorage.setItem(SESSION_STORAGE_KEY, sessionTokenFromUrl);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                activeToken = sessionTokenFromUrl; 
+            }
+
+            if (activeToken) {
+                try {
+                    const response = await fetch(`${API_URL}/api/user-info?token=${activeToken}`);
+                    if (response.ok) {
+                        currentUser = await response.json();
+                    } else {
+                        const errorData = await response.json();
+                        initialErrorMessage = `Session Error: ${errorData.error}. Please use <code>!music</code> again.`;
+                        currentUser = null; 
+                        localStorage.removeItem(SESSION_STORAGE_KEY); 
+                    }
+                } catch (error) {
+                    initialErrorMessage = 'Error verifying session. Please use <code>!music</code> again.';
+                    currentUser = null; 
+                    localStorage.removeItem(SESSION_STORAGE_KEY); 
+                }
+            } else {
+                initialErrorMessage = 'No active session. Use the <code>!music</code> command in Discord to get a link.';
+            }
+            
+            displayUserInfo(currentUser, initialErrorMessage);
+            
+            urlInput.addEventListener('keydown', handleSearchKeyDown);
+            urlInput.addEventListener('input', (e) => handleSearchInput(e, searchResultsDiv));
+            playForm.addEventListener('submit', handlePlayFormSubmit);
+            skipBtn.addEventListener('click', handleSkip);
+            pauseBtn.addEventListener('click', handlePause);
+            resumeBtn.addEventListener('click', handleResume);
+            stopBtn.addEventListener('click', handleStop);
+            volumeSlider.addEventListener('input', handleVolumeChange); 
+            volumeIcon.addEventListener('click', toggleMute); 
+            
+            updateQueue();
+            setInterval(updateQueue, 1000); 
+        });
+
+        function displayUserInfo(userData, errorMessage = null) {
+            const userInfoDisplay = document.getElementById('userInfoDisplay'); 
+            if (!userInfoDisplay) return;
+
+            const sessionValid = userData && !errorMessage;
+            let messageHtml = '';
+
+            if (errorMessage && (!userData || !sessionValid)) { 
+                messageHtml = `<small style="font-weight: 300;">${errorMessage}`;
+                if (errorMessage.includes("No active session") || errorMessage.includes("Session Error") || errorMessage.includes("Error verifying session")) {
+                     messageHtml += `<span class="close-session-message-btn" title="Hide message" onclick="hideUserInfoDisplay()">×</span>`;
+                }
+                messageHtml += `</small>`;
+                userInfoDisplay.classList.remove('session-active'); 
+            } else if (userData) { 
+                messageHtml = `
+                    <img src="${userData.userAvatar}" alt="${userData.userName}">
+                    <span>Interacting as: <strong>${userData.userName}</strong></span>`;
+                userInfoDisplay.classList.add('session-active'); 
+            } else { 
+                messageHtml = `<small style="font-weight: 300;">No active session. Use the <code>!music</code> command in Discord to get a link.<span class="close-session-message-btn" title="Hide message" onclick="hideUserInfoDisplay()">×</span></small>`;
+                userInfoDisplay.classList.remove('session-active'); 
+            }
+
+            userInfoDisplay.innerHTML = messageHtml;
+            userInfoDisplay.style.display = (messageHtml.trim() !== '') ? 'block' : 'none'; 
+
+            if (controlsCard) {
+                if (sessionValid) {
+                    controlsCard.classList.remove('hidden-for-unsessioned');
+                } else {
+                    controlsCard.classList.add('hidden-for-unsessioned');
+                }
+            }
+        }
+
+        function hideUserInfoDisplay() {
+            const userInfoDisplay = document.getElementById('userInfoDisplay');
+            if (userInfoDisplay) {
+                userInfoDisplay.style.display = 'none';
+            }
+        }
+
+        function getYouTubeVideoId(url) { 
+            if (!url || typeof url !== 'string') return null; let videoId = null;
+            try { const urlObj = new URL(url);
+                if (urlObj.hostname.includes('youtube.com')) {
+                    if (urlObj.pathname === '/watch') videoId = urlObj.searchParams.get('v');
+                    else if (urlObj.pathname.startsWith('/embed/')) videoId = urlObj.pathname.substring(7); 
+                    else if (urlObj.pathname.startsWith('/v/')) videoId = urlObj.pathname.substring(3); 
+                    else if (urlObj.pathname.startsWith('/shorts/')) videoId = urlObj.pathname.substring(8); 
+                } else if (urlObj.hostname === 'youtu.be') videoId = urlObj.pathname.substring(1);
+                if (videoId && videoId.includes('&')) videoId = videoId.split('&')[0];
+                if (videoId && videoId.includes('?')) videoId = videoId.split('?')[0];
+            } catch (e) {
+                const patterns = [/(?:v=|embed\/|v\/|shorts\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/];
+                for (const p of patterns) { const m = url.match(p); if (m && m[1]) { videoId = m[1]; break; } }
+            } return (videoId && videoId.length === 11) ? videoId : null;
+        }
+        
+        async function handleSearchKeyDown(e) { 
+            if(!currentUser) return; 
+            if (e.key === 'Enter') { 
+                e.preventDefault(); 
+                const query = urlInput.value.trim(); 
+                if (!query) return;
+
+                if (isValidUrl(query)) { 
+                    await playVideo(null, query); 
+                    return; 
+                } 
+                
+                // ***** แก้ไขตรงนี้: ให้ทำการค้นหาใหม่เสมอเมื่อกด Enter ถ้าไม่ใช่ URL *****
+                console.log("Enter pressed with search query:", query);
+                showNotification('info', 'กำลังค้นหา...', `ค้นหาเพลง "${query}"`);
+                const searchData = await performSearch(query); 
+                if (searchData && searchData.length > 0) {
+                    // เล่นเพลงแรกที่เจอจากการค้นหาใหม่
+                    await playVideo(searchData[0].id.videoId); 
+                } else {
+                    showNotification('info', 'ไม่เจอเพลง', `ไม่พบผลลัพธ์สำหรับ "${query}"`);
+                }
+                // ล้างผลลัพธ์การค้นหาที่อาจจะแสดงอยู่บน UI (ถ้ามี)
+                searchResultsDiv.style.display = 'none';
+                searchResultsDiv.innerHTML = '';
+                searchResultsData = [];
+                selectedResultIndex = -1;
+            } else if (searchResultsDiv.style.display !== 'none' && searchResultsData.length > 0) { 
+                // Logic การเลื่อนด้วยปุ่มลูกศรยังคงเดิม
+                if (e.key === 'ArrowDown') { e.preventDefault(); selectedResultIndex = Math.min(selectedResultIndex + 1, searchResultsData.length - 1); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); selectedResultIndex = Math.max(selectedResultIndex - 1, 0); } 
+                updateSelectedResultVisuals();
+            }
+        }
+
+        function updateSelectedResultVisuals() { 
+            Array.from(searchResultsDiv.children).forEach((item, idx) => item.classList.toggle('selected', idx === selectedResultIndex));
+            if (selectedResultIndex !== -1 && searchResultsDiv.children[selectedResultIndex]) { 
+                 searchResultsDiv.children[selectedResultIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        async function performSearch(query) {
+            try {
+                const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(query)}`);
+                if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Search failed');} 
+                const data = await response.json();
+                return data.items || [];
+            } catch (error) { 
+                console.error('Search error:', error); 
+                showNotification('error', 'Search Error', error.message); 
+                return []; 
+            } 
+        }
+
+        function handleSearchInput(e) { 
+            if(!currentUser) return; 
+            const query = e.target.value.trim(); selectedResultIndex = -1;
+            if (searchTimeout) clearTimeout(searchTimeout);
+            if (!query || isValidUrl(query)) { searchResultsDiv.style.display = 'none'; searchResultsDiv.innerHTML = ''; searchResultsData = []; return; }
+            searchResultsDiv.innerHTML = `<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Searching...</div>`;
+            searchResultsDiv.style.display = 'block';
+            searchTimeout = setTimeout(async () => {
+                searchResultsData = await performSearch(query); 
+                if (searchResultsData.length > 0) {
+                    searchResultsDiv.innerHTML = searchResultsData.map(item => `
+                        <div class="search-result-item" data-video-id="${item.id.videoId}">
+                            <img src="${item.snippet.thumbnails.medium.url}" alt="${item.snippet.title}"><div class="info"><div class="title">${item.snippet.title}</div><div class="channel">${item.snippet.channelTitle}</div></div></div>`).join('');
+                    Array.from(searchResultsDiv.children).forEach(item => item.addEventListener('click', () => playVideo(item.dataset.videoId)));
+                } else { searchResultsDiv.innerHTML = `<div class="loading-spinner">No results found</div>`; }
+            }, 300);
+        }
+
+        async function playVideo(videoId, directUrl = null) { 
+            if (!currentUser || !currentUser.userId) { showNotification('warning', 'No Session', 'Please use !music in Discord.'); return; } 
+            const urlToPlay = directUrl || (videoId ? `https://www.youtube.com/watch?v=${videoId}` : null);
+            if (!urlToPlay) { showNotification('warning', 'Input Error', 'No video URL to play.'); return; } 
+            
+            urlInput.value = ''; // เคลียร์ช่อง input หลังจากส่งคำสั่ง
+            // searchResultsDiv.style.display = 'none'; // ถูกจัดการใน handleSearchKeyDown และ handlePlayFormSubmit แล้ว
+            // searchResultsData = [];
+            // selectedResultIndex = -1;
+                    
+            try {
+                const response = await fetch(`${API_URL}/api/play`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlToPlay, userId: currentUser.userId })
+                });
+                if (!response.ok) { const err = await response.json(); throw new Error(err.error || 'Failed to play'); }
+                const data = await response.json();
+                showNotification('success', 'เพลงกำลังจะมา!', data.message || 'เพิ่มเพลงแล้ว / กำลังเล่นจ้า!'); 
+                previousCurrentSongId = 'force_update_play'; 
+                previousQueueLength = -1; 
+                updateQueue(); 
+            } catch (error) { console.error('Play error:', error); showNotification('error', 'Play Error', error.message); } 
+        }
+
+        async function handlePlayFormSubmit(e) { 
+            e.preventDefault(); 
+            if (!currentUser) { showNotification('warning', 'No Session', 'Please use !music in Discord.'); return; } 
+            
+            const queryOrUrl = urlInput.value.trim(); 
+            if (!queryOrUrl) return;
+
+            if (isValidUrl(queryOrUrl)) { 
+                await playVideo(null, queryOrUrl); 
+            } else { 
+                // ***** แก้ไขตรงนี้: ให้ทำการค้นหาใหม่เสมอเมื่อกดปุ่ม Play ถ้าไม่ใช่ URL *****
+                console.log("Play button pressed with search query:", queryOrUrl);
+                showNotification('info', 'กำลังค้นหา...', `ค้นหาเพลง "${queryOrUrl}"`);
+                const searchData = await performSearch(queryOrUrl); 
+                if (searchData && searchData.length > 0) {
+                    await playVideo(searchData[0].id.videoId);
+                } else {
+                    showNotification('info', 'ไม่เจอเพลง', `ไม่พบผลลัพธ์สำหรับ "${queryOrUrl}"`);
+                }
+                // ล้างผลลัพธ์การค้นหาที่อาจจะแสดงอยู่บน UI (ถ้ามี)
+                searchResultsDiv.style.display = 'none';
+                searchResultsDiv.innerHTML = '';
+                searchResultsData = [];
+                selectedResultIndex = -1;
+            }
+        }
+
+        function isValidUrl(string) { try { new URL(string); return true; } catch (_) { return false; } }
+
+        async function handleApiAction(endpoint, method = 'POST', body = null) {
+            try {
+                const options = { method }; if (body) { options.headers = { 'Content-Type': 'application/json' }; options.body = JSON.stringify(body); }
+                const response = await fetch(`${API_URL}/api${endpoint}`, options);
+                if (!response.ok) { const err = await response.json(); throw new Error(err.error || `API action ${endpoint} failed`); }
+                const data = await response.json();
+                if(data.message && endpoint !== '/volume' && endpoint !== '/seek' && endpoint !== '/reorder-queue') { 
+                     showNotification('success', 'สำเร็จ!', data.message);
+                }
+                return data;
+            } catch (error) { 
+                console.error(`Error with ${endpoint}:`, error); 
+                showNotification('error', 'เกิดข้อผิดพลาด', error.message); 
+                throw error; 
+            }
+        }
+        async function handleSkip() { 
+            if(!currentUser) return; 
+            await handleApiAction('/skip'); 
+            previousCurrentSongId = 'force_update_skip'; 
+            previousQueueLength = -1;
+            updateQueue(); 
+        }
+        async function handlePause() { if(!currentUser) return; await handleApiAction('/pause'); updateQueue(); } 
+        async function handleResume() { if(!currentUser) return; await handleApiAction('/resume'); updateQueue(); } 
+        async function handleStop() { 
+            if(!currentUser) return; 
+            await handleApiAction('/stop'); 
+            previousCurrentSongId = null; 
+            previousQueueLength = 0;   
+            currentSongDataForSeek = null; 
+            updateQueue(); 
+        }
+        
+        async function handleVolumeChange(e) { 
+            if(!currentUser) { 
+                e.target.value = previousVolumeBeforeMute; 
+                return;
+            }
+            const newVolume = parseInt(e.target.value);
+            if (newVolume === 0) {
+                isMuted = true;
+                updateVolumeIconDOM(0); 
+            } else {
+                isMuted = false;
+                updateVolumeIconDOM(newVolume);
+            }
+            try {
+                await fetch(`${API_URL}/api/volume`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ volume: newVolume }) 
+                });
+                if (!isMuted && newVolume > 0) {
+                    previousVolumeBeforeMute = newVolume;
+                }
+            } catch (error) { 
+                console.error("Volume change API error:", error);
+                showNotification('error', 'ผิดพลาด', 'ปรับเสียงไม่ได้ ลองใหม่นะ');
+            }
+        }
+
+        function updateVolumeIconDOM(volume) { 
+            volumeIcon.classList.remove('fa-volume-up', 'fa-volume-down', 'fa-volume-off', 'fa-volume-mute');
+            if (volume === 0 || isMuted) {
+                volumeIcon.classList.add('fa-volume-mute');
+            } else if (volume <= 30) {
+                volumeIcon.classList.add('fa-volume-off');
+            } else if (volume <= 70) {
+                volumeIcon.classList.add('fa-volume-down');
+            } else {
+                volumeIcon.classList.add('fa-volume-up');
+            }
+        }
+
+        async function toggleMute() { 
+            if(!currentUser) return; 
+
+            isMuted = !isMuted;
+            let targetVolume;
+
+            if (isMuted) {
+                if (parseInt(volumeSlider.value) > 0) {
+                    previousVolumeBeforeMute = parseInt(volumeSlider.value);
+                }
+                targetVolume = 0;
+            } else {
+                targetVolume = previousVolumeBeforeMute > 0 ? previousVolumeBeforeMute : 50; 
+            }
+            
+            volumeSlider.value = targetVolume; 
+            updateVolumeIconDOM(targetVolume); 
+            try {
+                await fetch(`${API_URL}/api/volume`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ volume: targetVolume }) 
+                });
+            } catch (error) { 
+                console.error("Mute toggle API error:", error);
+                showNotification('error', 'ผิดพลาด', 'เปิด/ปิดเสียงไม่ได้ ลองใหม่นะ');
+            }
+        }
+
+        async function handleSeek(seconds) {
+            if (!currentUser || !currentSongDataForSeek) {
+                showNotification('warning', 'ทำไม่ได้นะ', 'ยังไม่มีเพลงเล่น หรือนายยังไม่ได้ล็อกอิน'); 
+                return;
+            }
+            const newTime = currentSongDataForSeek.currentTime + seconds;
+            const clampedTime = Math.max(0, Math.min(newTime, currentSongDataForSeek.duration)); 
+
+            try {
+                await handleApiAction('/seek', 'POST', { time: clampedTime });
+                currentSongDataForSeek.currentTime = clampedTime; 
+                updateNowPlayingDisplay(currentSongDataForSeek); 
+            } catch (error) {
+                // Error already shown by handleApiAction
+            }
+        }
+        
+        function updateNowPlayingDisplay(currentSongData) {
+            currentSongDataForSeek = currentSongData; 
+
+            if (!nowPlayingContainer) return; 
+
+            if (!currentSongData) {
+                nowPlayingContainer.innerHTML = '';
+                if (videoPlayerCard) videoPlayerCard.style.display = 'none';
+                if (vinylDisk) vinylDisk.classList.remove('playing');
+                return;
+            }
+
+            const addedBy = currentSongData.metadata?.addedBy;
+            const isActuallyPlaying = !currentSongData.paused;
+
+            if (videoPlayerCard && youtubeThumbnail && vinylDisk) {
+                const videoId = getYouTubeVideoId(currentSongData.url);
+                if (videoId) {
+                    let thumbnailUrl = `https://img.youtube.com/vi/${videoId}/sddefault.jpg`;
+                    youtubeThumbnail.alt = (currentSongData.name || "Song cover") + " label";
+                    const setDefaultThumbnail = (imgElement) => {
+                        imgElement.src = 'https://via.placeholder.com/250/202225/FFFFFF?text=No+Cover'; 
+                        imgElement.onerror = null; 
+                    };
+                    const tryNextThumbnail = (imgElement, videoIdToTry, qualities) => {
+                        if (qualities.length === 0) { setDefaultThumbnail(imgElement); return; }
+                        const nextQuality = qualities.shift();
+                        imgElement.src = `https://img.youtube.com/vi/${videoIdToTry}/${nextQuality}.jpg`;
+                        imgElement.onerror = () => tryNextThumbnail(imgElement, videoIdToTry, qualities);
+                    };
+                    youtubeThumbnail.src = thumbnailUrl; 
+                    youtubeThumbnail.onerror = () => {
+                        console.warn(`Failed to load sddefault.jpg for ${videoId}. Trying alternatives.`);
+                        tryNextThumbnail(youtubeThumbnail, videoId, ['hqdefault', 'mqdefault', 'default']);
+                    };
+                    videoPlayerCard.style.display = 'block';
+                } else { 
+                    videoPlayerCard.style.display = 'none'; 
+                    youtubeThumbnail.src = 'https://via.placeholder.com/250/202225/FFFFFF?text=No+Video+ID'; 
+                    youtubeThumbnail.alt = "Cover not available";
+                }
+                vinylDisk.classList.toggle('playing', isActuallyPlaying);
+            }
+
+            const existingNowPlayingElement = nowPlayingContainer.querySelector('.current-song-item');
+            const existingSongId = existingNowPlayingElement?.dataset.songId;
+
+            const seekControlsHtml = currentUser ? `
+                <div class="seek-controls">
+                    <button class="btn seek-btn" onclick="handleSeek(-10)" title="Rewind 10s"><i class="fas fa-backward"></i> 10s</button>
+                    <button class="btn seek-btn" onclick="handleSeek(10)" title="Forward 10s">10s <i class="fas fa-forward"></i></button>
+                </div>
+            ` : '';
+
+            if (existingSongId === currentSongData.id) {
+                const timeDisplay = existingNowPlayingElement.querySelector('.song-time-display');
+                const countdownDisplay = existingNowPlayingElement.querySelector('.song-countdown-display');
+                if (timeDisplay) {
+                    timeDisplay.textContent = `${formatDuration(currentSongData.currentTime)} / ${formatDuration(currentSongData.duration)}`;
+                }
+                if (countdownDisplay) {
+                    countdownDisplay.textContent = `(${formatDuration(currentSongData.duration - currentSongData.currentTime)} left)`;
+                }
+                const existingSeekControls = existingNowPlayingElement.querySelector('.seek-controls');
+                if (currentUser && !existingSeekControls && seekControlsHtml) { 
+                    const songInfoDiv = existingNowPlayingElement.querySelector('.song-info');
+                    if (songInfoDiv) songInfoDiv.insertAdjacentHTML('beforeend', seekControlsHtml);
+                } else if (!currentUser && existingSeekControls) {
+                    existingSeekControls.remove();
+                }
+            } else {
+                nowPlayingContainer.innerHTML = `
+                    <div class="queue-item current-song current-song-item" data-song-id="${currentSongData.id}">
+                        <div class="song-info">
+                            <strong style="font-weight: 700;">Now Playing:</strong> <span style="font-weight: 500;">${currentSongData.name}</span>
+                            <div>
+                                <span class="song-duration"><i class="fas fa-clock"></i> <span class="song-time-display">${formatDuration(currentSongData.currentTime)} / ${formatDuration(currentSongData.duration)}</span></span>
+                                <span class="countdown song-countdown-display">(${formatDuration(currentSongData.duration - currentSongData.currentTime)} left)</span>
+                            </div>
+                            ${addedBy ? `<small class="added-by"><img src="${addedBy.avatar || ''}" class="added-by-avatar" alt="${addedBy.name || ''}"><span style="font-weight: 300;">${addedBy.name || 'Unknown'}</span></small>` : ''}
+                            ${seekControlsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateQueueItemsDisplay(queueData, currentSongIsPlaying) { 
+            if (!queueItemsContainer) return; 
+
+            if (!queueData || queueData.length === 0) {
+                queueItemsContainer.innerHTML = ''; 
+                if (sortableQueue) { 
+                    sortableQueue.destroy();
+                    sortableQueue = null;
+                }
+                return;
+            }
+            
+            let itemsHtmlOnly = '';
+            queueData.forEach((song, index) => {
+                const addedBy = song.metadata?.addedBy;
+                const showTrashButton = currentUser ? '' : 'style="display:none;"'; 
+                const dragHandleHtml = currentUser ? '<span class="drag-handle" title="Drag to reorder"><i class="fas fa-grip-lines"></i></span>' : '';
+                itemsHtmlOnly += `
+                    <div class="queue-item queue-item-list" data-actual-queue-index="${index}" data-song-id="${song.id || 'qID'+index}"> 
+                        ${dragHandleHtml}
+                        <div class="song-info" style="font-weight: 400;">${song.name}
+                            <div class="song-duration"><i class="fas fa-clock"></i> ${formatDuration(song.duration)}</div>
+                            ${addedBy ? `<small class="added-by"><img src="${addedBy.avatar || ''}" class="added-by-avatar" alt="${addedBy.name || ''}"><span style="font-weight: 300;">${addedBy.name || 'Unknown'}</span></small>` : ''}
+                        </div>
+                        <button class="delete-btn" onclick="removeFromQueue(${index})" ${showTrashButton}><i class="fas fa-trash"></i></button>
+                    </div>`;
+            });
+            
+            queueItemsContainer.innerHTML = `
+                <div class="queue-header"><strong style="font-weight: 600;"><i class="fas fa-headphones"></i> Up Next :</strong></div>
+                <div id="sortable-items-actual">${itemsHtmlOnly}</div>
+            `;
+
+            const sortableElement = document.getElementById('sortable-items-actual');
+            if (currentUser && sortableElement && queueData.length > 0) {
+                if (sortableQueue) {
+                    sortableQueue.destroy(); 
+                }
+                sortableQueue = new Sortable(sortableElement, { 
+                    animation: 150,
+                    handle: '.drag-handle', 
+                    onEnd: async function (evt) {
+                        console.log('SortableJS onEnd:', { oldIndex: evt.oldIndex, newIndex: evt.newIndex, item: evt.item.dataset.songId });
+                        if (evt.oldIndex !== evt.newIndex) {
+                            try {
+                                await handleApiAction('/reorder-queue', 'POST', {
+                                    oldIndex: evt.oldIndex, 
+                                    newIndex: evt.newIndex  
+                                });
+                                previousQueueLength = -1; 
+                                updateQueue();
+                            } catch (error) {
+                                showNotification('error', 'Reorder Failed', 'Could not reorder the song.');
+                            }
+                        }
+                    }
+                });
+            } else if (sortableQueue) { 
+                sortableQueue.destroy();
+                sortableQueue = null;
+            }
+        }
+        
+        async function updateQueue() {
+            try {
+                const response = await fetch(`${API_URL}/api/queue`);
+                if (!response.ok) { console.error('Failed to fetch queue state'); return; }
+                const data = await response.json();
+
+                const hasCurrentSong = data.current ? true : false;
+                const isActuallyPlaying = hasCurrentSong && !data.current.paused;
+                
+                if (currentUser) { 
+                    pauseBtn.style.display = isActuallyPlaying ? 'inline-block' : 'none';
+                    resumeBtn.style.display = hasCurrentSong && data.current.paused ? 'inline-block' : 'none';
+                } else { 
+                    pauseBtn.style.display = 'none';
+                    resumeBtn.style.display = 'none';
+                }
+                
+                if (currentUser) { 
+                    if (isMuted) { updateVolumeIconDOM(0); } 
+                    else { updateVolumeIconDOM(parseInt(volumeSlider.value)); }
+                }
+
+                updateNowPlayingDisplay(data.current);
+
+                const currentSongId = data.current ? data.current.id : null;
+                const currentQueueLength = data.queue ? data.queue.length : 0;
+                let queueStructureChanged = false;
+
+                if (previousCurrentSongId !== currentSongId) {
+                    queueStructureChanged = true;
+                }
+                if (previousQueueLength !== currentQueueLength) {
+                    queueStructureChanged = true;
+                }
+                
+                if (queueStructureChanged) {
+                    updateQueueItemsDisplay(data.queue, hasCurrentSong); 
+                    previousQueueLength = currentQueueLength;
+                } else if (data.queue && data.queue.length > 0 && !document.getElementById('sortable-items-actual')?.hasChildNodes()) {
+                    updateQueueItemsDisplay(data.queue, hasCurrentSong);
+                } else if ((!data.queue || data.queue.length === 0) && document.getElementById('sortable-items-actual')?.hasChildNodes()) {
+                     updateQueueItemsDisplay(null, hasCurrentSong); 
+                }
+
+                previousCurrentSongId = currentSongId;
+                
+                if (!hasCurrentSong && (!data.queue || data.queue.length === 0)) {
+                    if(emptyQueueMessage) emptyQueueMessage.style.display = 'block';
+                    if(queueItemsContainer) queueItemsContainer.innerHTML = ''; 
+                    if (sortableQueue) { 
+                        sortableQueue.destroy();
+                        sortableQueue = null;
+                    }
+                } else {
+                    if(emptyQueueMessage) emptyQueueMessage.style.display = 'none';
+                }
+
+            } catch (error) { console.error('Error updating queue:', error); }
+        }
+        async function removeFromQueue(indexInUpcomingQueue) { 
+            if (!currentUser) { showNotification('warning', 'ไม่มีสิทธิ์', 'ต้องล็อกอินก่อนนะจ๊ะ'); return; } 
+            await handleApiAction('/remove', 'POST', { index: indexInUpcomingQueue });
+            previousQueueLength = -1; 
+            updateQueue();
+        }
+        function formatDuration(s) { if(isNaN(s)||s<0)return'0:00';const m=Math.floor(s/60);const rs=Math.floor(s%60);return`${m}:${rs.toString().padStart(2,'0')}`; }
+    </script>
+</body>
+</html>
